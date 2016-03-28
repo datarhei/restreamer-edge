@@ -1,0 +1,47 @@
+server {
+    
+    listen ##RTMP_SERVER_PORT##;
+        
+    timeout ##RTMP_SERVER_TIMEOUT##;
+    ping ##RTMP_SERVER_PING##;
+    ping_timeout ##RTMP_SERVER_PING_TIMEOUT##;
+    max_streams ##RTMP_SERVER_MAX_STREAMS##;
+    ack_window ##RTMP_SERVER_ACK_WINDOW##;
+    chunk_size ##RTMP_SERVER_CHUNK_SIZE##;
+    max_message ##RTMP_SERVER_MAX_MESSAGE##;
+    buflen ##RTMP_SERVER_BUFLEN##;
+            
+    application hls {
+        live on;
+        exec /usr/local/bin/ffmpeg -i rtmp://127.0.0.1:##RTMP_SERVER_PORT##/hls/$name
+            ##FFMPEG_COMMAND##
+            -vf fps=fps=1/##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL## -update 1 -y /usr/local/nginx/html/images/$name.jpg;
+
+        on_publish http://localhost:##HTTP_SERVER_PORT##/auth;
+        notify_method get;
+    }
+
+    application hls-endpoint {
+        live on;
+        hls on;
+        hls_path /tmp/hls;
+        
+        hls_fragment ##RTMP_SERVER_HLS_FRAGMENT##;
+        hls_playlist_length ##RTMP_SERVER_HLS_PLAYLIST_LENGTH##;
+        hls_sync ##RTMP_SERVER_HLS_SYNC##;
+        hls_continuous ##RTMP_SERVER_HLS_CONTINOUS##;
+        hls_nested ##RTMP_SERVER_HLS_NESTED##;
+        hls_cleanup ##RTMP_SERVER_HLS_CLEANUP##;
+        hls_fragment_naming ##RTMP_SERVER_HLS_FRAGMENT_NAMING##;
+        hls_fragment_naming_granularity ##RTMP_SERVER_HLS_FRAGMENT_NAMING_GRANULARITY##;
+        hls_fragment_slicing ##RTMP_SERVER_HLS_FRAGMENT_SLICING##;
+        hls_type ##RTMP_SERVER_HLS_TYPE##;
+        hls_keys ##RTMP_SERVER_HLS_KEY##;
+        hls_key_path /tmp/keys;
+        hls_fragments_per_key ##RTMP_SERVER_HLS_FRAGMENTS_PER_KEY##;
+        
+        ##HLS_VARIANT##
+                                    
+    }
+
+}

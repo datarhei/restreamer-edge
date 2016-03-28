@@ -1,0 +1,26 @@
+error_log stderr;
+
+worker_processes ##WORKER_PROCESSES##;
+
+events {
+    worker_connections ##WORKER_CONNECTIONS##;
+}
+
+rtmp_auto_push ##RTMP_AUTO_PUSH##;
+
+rtmp {
+    access_log ##RTMP_ACCESS_LOG##;   
+    include /usr/local/nginx/conf/vhost/rtmp/*;
+}
+
+http {
+    sendfile ##HTTP_SENDFILE##;
+    tcp_nopush ##HTTP_TCP_NOPUSH##;
+    aio ##HTTP_AIO##;
+    directio ##HTTP_DIRECTIO##;
+    vhost_traffic_status_zone;
+    include /usr/local/nginx/conf/vhost/www/*;
+    access_log ##HTTP_ACCESS_LOG##; 
+}
+
+daemon off;

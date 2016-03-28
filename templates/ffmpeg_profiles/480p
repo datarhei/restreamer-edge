@@ -1,0 +1,1 @@
+        -c:v libx264 -c:a aac -b:v 819k -b:a 128k -g 35 -profile:v baseline -vf scale=-2:480 -tune zerolatency -bufsize 500k -shortest -strict -2 -f flv rtmp://127.0.0.1:##RTMP_SERVER_PORT##/hls-endpoint/$name_480p
