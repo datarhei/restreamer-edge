@@ -79,13 +79,16 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 #### Enable HTTPS/SSL:
 
 ```sh
-  -p 443:443
   -e "HTTPS_SERVER=true" 
   -e "HTTPS_CERT_MAIL=admin@example.org" 
   -e "HTTPS_CERT_DOMAIN=example.org,example.com" 
+  -p 443:443
+  -v /mnt/restreamer-edge/letsencrypt:/etc/letsencrypt
 ```
 
-*Port 80/443 have to be forwarded to the Restreamer-Edge and the destination of your Domains have to be your host IP-Address!*
+*Port 80/443 have to be forwarded to the Restreamer-Edge and the destination of your Domains have to be your host IP-Address!* 
+
+*["Error creating new cert :: Too many certificates already issued for exact set of domains"](https://community.letsencrypt.org/t/public-beta-rate-limits/4772)*
 
 ## Usage
 

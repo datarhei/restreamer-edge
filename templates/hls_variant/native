@@ -1,1 +1,1 @@
-        hls_variant _native BANDWIDTH=5000000;
+        hls_variant _native BANDWIDTH=2350000;
