@@ -288,7 +288,7 @@ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" m
 
 2. reduce the I/O by a RAM-Disk (268M is just a example)  
    ```sh
-   $ mount -t tmpfs -o size=268M none /tmp/hls/
+   $ mount -t tmpfs -o size=268M none /mnt/restreamer-edge/hls
    $ docker run .... -v /mnt/restreamer-edge/hls:/tmp/hls ....
    ```
 
