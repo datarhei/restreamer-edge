@@ -10,6 +10,7 @@ Currently the Restreamer-Edge is very plain and bash based application without u
 * [Enviroment playground](#enviroment-playground)
 * [Enviroment variables](#enviroment-variables)
 * [Hosting examples](#hosting-examples)
+* [Optimizations / Tips](#optimizatons-tips)
 * [Help, bugs and future requests](#help-bugs-and-future-requests)
 
 ## Features
@@ -20,6 +21,7 @@ Currently the Restreamer-Edge is very plain and bash based application without u
 * [NJS](https://github.com/nginx/njs) for the rtmp-authentification
 * [Clappr-Player](https://github.com/clappr/clappr) as HLS-player to embed your stream upon your website (no Adobe Flash)
 * [FFmpeg](http://ffmpeg.org) to create snapshots and live-transcode (if enabled) each is pushing streams to 240p, 360p, 480p and 720p
+* [Let's Encrypt](https://github.com/letsencrypt/letsencrypt) to secure NGINX by a verified certificate
 
 ## Docker startup
 
@@ -57,16 +59,33 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
 ```sh
   -e "RTMP_SERVER_HLS_TRANSCODING=true" 
   -e "RTMP_SERVER_HLS_TRANSCODING_PROFILES=240p,720p" 
-  -e "RTMP_SERVER_HLS_PLAYLIST_LENGTH=18000" 
 ```
 
+Available profiles are: 240p, 360p, 480p, 720p and native   
 *Trancoding requires high CPU power for each pushed stream!*
+
+#### 5 hours DvR like playlist
+
+```sh
+  -e "RTMP_SERVER_HLS_PLAYLIST_LENGTH=18000" 
+```
 
 #### Enable Access-Log and send it to STDOUT:
 
 ```sh
   -e "HTTP_ACCESS_LOG=/dev/stdout" 
 ```
+
+#### Enable HTTPS/SSL:
+
+```sh
+  -p 443:443
+  -e "HTTPS_SERVER=true" 
+  -e "HTTPS_CERT_MAIL=admin@example.org" 
+  -e "HTTPS_CERT_DOMAIN=example.org,example.com" 
+```
+
+*Port 80/443 have to be forwarded to the Restreamer-Edge and the destination of your Domains have to be your host IP-Address!*
 
 ## Usage
 
@@ -125,19 +144,23 @@ RTMP_SERVER_HLS_FRAGMENTS_PER_KEY "0"
 RTMP_SERVER_HLS_MAX_CONNECTIONS "1000"
 RTMP_SERVER_HLS_SNAPSHOT_INTERVAL "60"
 RTMP_SERVER_HLS_TRANSCODING "false"
-RTMP_SERVER_HLS_TRANSCODING_PROFILES "240p,360p,480p,720p"
+RTMP_SERVER_HLS_TRANSCODING_PROFILES "240p,360p,480p,720p,native"
 RTMP_SERVER_HLS_PUBLISH_TOKEN "datarhei"
 
-HTTP_SENDFILE "off"
+HTTP_SENDFILE "on"
 HTTP_TCP_NOPUSH "on"
-HTTP_AIO "on"
-HTTP_DIRECTIO "512"
+HTTP_TCP_NODELAY "on"
 HTTP_ACCESS_LOG "off"
 
 HTTP_SERVER_PORT "80"
 HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN "*"
 HTTP_SERVER_HLS_STATUS_USERNAME "admin"
 HTTP_SERVER_HLS_STATUS_PASSWORD "datarhei"
+
+HTTPS_SERVER "false"
+HTTPS_SERVER_PORT "443"
+HTTPS_CERT_MAIL "admin@example.org"
+HTTPS_CERT_DOMAIN "example.org"
 ```
 
 ## Hosting examples
@@ -176,7 +199,7 @@ coreos:
         ExecReload=/usr/bin/docker restart restreamer-edge
    ```
 
-2. wait few minutes, then you can push a stream to "rtmp://[your-droplet-ip]:1935/hls/mystream&token=datarhei" and can open the Player/Stream "http://[your-droplet-ip]:80/?stream=mystream"
+2. wait few minutes, then you can push a stream to "rtmp://[your-droplet-ip]:1935/hls/mystream?token=datarhei" and can open the Player/Stream "http://[your-droplet-ip]:80/?stream=mystream"
 
 *Hint: Please use your own auth. data^^*
 
@@ -202,7 +225,7 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
   -e "RTMP_SERVER_HLS_PUBLISH_TOKEN=datarhei" \
       datarhei/restreamer-edge:latest
    ```
-5. Wait few minutes, then you can push the stream to "rtmp://[your-server-ip]:1935/hls/mystream&token=datarhei". Open the Player/Stream "http://[your-server-ip]:80/?stream=mystream"
+5. Wait few minutes, then you can push the stream to "rtmp://[your-server-ip]:1935/hls/mystream?token=datarhei". Open the Player/Stream "http://[your-server-ip]:80/?stream=mystream"
 
 
 *Hint: Please use your own auth. data^^*
@@ -251,9 +274,23 @@ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" m
 }'
    ```
 
-3. Wait few minutes, then you are able to push a stream to "rtmp://[mesos-agent-ip]:[port1]/hls/mystream&token=datarhei". Open the Player/Stream "http://[mesos-agent-ip]:[port0]/?stream=mystream"
+3. Wait few minutes, then you are able to push a stream to "rtmp://[mesos-agent-ip]:[port1]/hls/mystream?token=datarhei". Open the Player/Stream "http://[mesos-agent-ip]:[port0]/?stream=mystream"
 
 *Hint: Please use your own auth. data^^*
+
+## Optimizations / Tips
+
+1. reduce the network latency   
+   ```sh
+   replace "-p PORT:PORT" by
+   $ docker run ... --net=host ...
+   ```
+
+2. reduce the I/O by a RAM-Disk (268M is just a example)  
+   ```sh
+   $ mount -t tmpfs -o size=268M none /tmp/hls/
+   $ docker run .... -v /mnt/restreamer-edge/hls:/tmp/hls ....
+   ```
 
 ## Help, bugs and future requests
 

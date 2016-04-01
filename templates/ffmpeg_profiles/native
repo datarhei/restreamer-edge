@@ -1,0 +1,1 @@
+        -c:v copy -c:a copy -f flv rtmp://127.0.0.1:##RTMP_SERVER_PORT##/hls-endpoint/$name_native

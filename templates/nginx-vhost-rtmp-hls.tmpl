@@ -30,7 +30,7 @@ server {
         hls_key_path /tmp/keys;
         hls_fragments_per_key ##RTMP_SERVER_HLS_FRAGMENTS_PER_KEY##;
                     
-        exec /usr/local/bin/ffmpeg -i rtmp://localhost:##RTMP_SERVER_PORT##/hls/$name -vf fps=fps=1/##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL## -update 1 /usr/local/nginx/html/images/$name.jpg;
+        exec /snapshot.sh ##RTMP_SERVER_PORT## $name ##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL##;
             
         on_publish http://localhost:##HTTP_SERVER_PORT##/auth;
         notify_method get;

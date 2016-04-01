@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SET IMAGE FOLDER PERM
+chmod 777 /usr/local/nginx/html/images -R
+
 # ENABLE MULTIWORKER IF REQUIRED
 if [ "${WORKER_PROCESSES}" = "1" ]
 then
@@ -53,24 +56,42 @@ printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV RTMP_SERVER_HLS_TRANSCODING_PROF
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV RTMP_SERVER_HLS_PUBLISH_TOKEN ${RTMP_SERVER_HLS_PUBLISH_TOKEN}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_SENDFILE ${HTTP_SENDFILE}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_TCP_NOPUSH ${HTTP_TCP_NOPUSH}\n"
-printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_AIO ${HTTP_AIO}\n"
-printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_DIRECTIO ${HTTP_DIRECTIO}\n"
+printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_TCP_NODELAY ${HTTP_TCP_NODELAY}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_ACCESS_LOG ${HTTP_ACCESS_LOG}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_SERVER_PORT ${HTTP_SERVER_PORT}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN ${HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN}\n"
+printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTPS_SERVER ${HTTPS_SERVER}\n"
+printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTPS_SERVER_PORT ${HTTPS_SERVER_PORT}\n"
+printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTPS_CERT_MAIL ${HTTPS_CERT_MAIL}\n"
+printf "$(date '+%Y/%m/%d %H:%M:%S') [info] ENV HTTPS_CERT_DOMAIN ${HTTPS_CERT_DOMAIN}\n"
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] \n"
 
 # CREATE BASIC AUTH
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] " && htpasswd -bc /usr/local/nginx/conf/status.htpasswd ${HTTP_SERVER_HLS_STATUS_USERNAME} ${HTTP_SERVER_HLS_STATUS_PASSWORD}
 printf "\n"
 
+# CREATE SSL CERTS
+if [ "${HTTPS_SERVER}" = "true" ]
+then
+    DOMAINS=$(echo ${HTTPS_CERT_DOMAIN} | sed 's/,/ -d /g')
+    /opt/letsencrypt/letsencrypt-auto certonly --no-self-upgrade --renew-by-default --http-01-port 63443 --agree-tos --email ${HTTPS_CERT_MAIL} -d ${DOMAINS}
+fi
+
 # CREATE NGINX.CONF
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Creating nginx.conf\n"
-sed  "s|##WORKER_PROCESSES##|${WORKER_PROCESSES}|;s|##WORKER_CONNECTIONS##|${WORKER_CONNECTIONS}|;s|##RTMP_AUTO_PUSH##|${RTMP_AUTO_PUSH}|;s|##HTTP_SENDFILE##|${HTTP_SENDFILE}|;s|##HTTP_TCP_NOPUSH##|${HTTP_TCP_NOPUSH}|;s|##HTTP_AIO##|${HTTP_AIO}|;s|##HTTP_DIRECTIO##|${HTTP_DIRECTIO}|;s|##RTMP_ACCESS_LOG##|${RTMP_ACCESS_LOG}|;s|##HTTP_ACCESS_LOG##|${HTTP_ACCESS_LOG}|" /templates/nginx.tmpl > /usr/local/nginx/conf/nginx.conf
+sed  "s|##WORKER_PROCESSES##|${WORKER_PROCESSES}|;s|##WORKER_CONNECTIONS##|${WORKER_CONNECTIONS}|;s|##RTMP_AUTO_PUSH##|${RTMP_AUTO_PUSH}|;s|##HTTP_SENDFILE##|${HTTP_SENDFILE}|;s|##HTTP_TCP_NOPUSH##|${HTTP_TCP_NOPUSH}|;s|##HTTP_TCP_NODELAY##|${HTTP_TCP_NODELAY}|;s|##RTMP_ACCESS_LOG##|${RTMP_ACCESS_LOG}|;s|##HTTP_ACCESS_LOG##|${HTTP_ACCESS_LOG}|" /templates/nginx.tmpl > /usr/local/nginx/conf/nginx.conf
 
 # CREATE VHOST WWW HTTP
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Creating www/http vhost\n"
-    sed  "s|##HTTP_SERVER_PORT##|${HTTP_SERVER_PORT}|;s|##RTMP_SERVER_HLS_PUBLISH_TOKEN##|${RTMP_SERVER_HLS_PUBLISH_TOKEN}|;s|##HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##|${HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN}|" /templates/nginx-vhost-www-http.tmpl > /usr/local/nginx/conf/vhost/www/http.conf
+sed  "s|##HTTP_SERVER_PORT##|${HTTP_SERVER_PORT}|;s|##RTMP_SERVER_HLS_PUBLISH_TOKEN##|${RTMP_SERVER_HLS_PUBLISH_TOKEN}|;s|##HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##|${HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN}|" /templates/nginx-vhost-www-http.tmpl > /usr/local/nginx/conf/vhost/www/http.conf
+
+# CREATE VHOST WWW HTTPS
+if [ "${HTTPS_SERVER}" = "true" ]
+then
+    CERT_NAME=$(echo ${HTTPS_CERT_DOMAIN} | cut -d ',' -f1)
+    printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Creating www/https vhost\n"
+    sed  "s|##HTTPS_SERVER_PORT##|${HTTPS_SERVER_PORT}|;s|##CERT_NAME##|${CERT_NAME}|;s|##RTMP_SERVER_HLS_PUBLISH_TOKEN##|${RTMP_SERVER_HLS_PUBLISH_TOKEN}|;s|##HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##|${HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN}|" /templates/nginx-vhost-www-https.tmpl > /usr/local/nginx/conf/vhost/www/https.conf
+fi
 
 # CREATE VHOST RTMP HLS
 printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Creating rtmp/hls vhost\n"
@@ -111,5 +132,10 @@ fi
 sed  "s|##RTMP_SERVER_PORT##|${RTMP_SERVER_PORT}|;s|##RTMP_SERVER_TIMEOUT##|${RTMP_SERVER_TIMEOUT}|;s|##RTMP_SERVER_PING##|${RTMP_SERVER_PING}|;s|##RTMP_SERVER_PING_TIMEOUT##|${RTMP_SERVER_PING_TIMEOUT}|;s|##RTMP_SERVER_MAX_STREAMS##|${RTMP_SERVER_MAX_STREAMS}|;s|##RTMP_SERVER_ACK_WINDOW##|${RTMP_SERVER_ACK_WINDOW}|;s|##RTMP_SERVER_CHUNK_SIZE##|${RTMP_SERVER_CHUNK_SIZE}|;s|##RTMP_SERVER_MAX_MESSAGE##|${RTMP_SERVER_MAX_MESSAGE}|;s|##RTMP_SERVER_BUFLEN##|${RTMP_SERVER_BUFLEN}|;s|##RTMP_SERVER_HLS_FRAGMENT##|${RTMP_SERVER_HLS_FRAGMENT}|;s|##RTMP_SERVER_HLS_PLAYLIST_LENGTH##|${RTMP_SERVER_HLS_PLAYLIST_LENGTH}|;s|##RTMP_SERVER_HLS_SYNC##|${RTMP_SERVER_HLS_SYNC}|;s|##RTMP_SERVER_HLS_CONTINOUS##|${RTMP_SERVER_HLS_CONTINOUS}|;s|##RTMP_SERVER_HLS_NESTED##|${RTMP_SERVER_HLS_NESTED}|;s|##RTMP_SERVER_HLS_CLEANUP##|${RTMP_SERVER_HLS_CLEANUP}|;s|##RTMP_SERVER_HLS_FRAGMENT_NAMING##|${RTMP_SERVER_HLS_FRAGMENT_NAMING}|;s|##RTMP_SERVER_HLS_FRAGMENT_NAMING_GRANULARITY##|${RTMP_SERVER_HLS_FRAGMENT_NAMING_GRANULARITY}|;s|##RTMP_SERVER_HLS_FRAGMENT_SLICING##|${RTMP_SERVER_HLS_FRAGMENT_SLICING}|;s|##RTMP_SERVER_HLS_TYPE##|${RTMP_SERVER_HLS_TYPE}|;s|##RTMP_SERVER_HLS_KEY##|${RTMP_SERVER_HLS_KEY}|;s|##RTMP_SERVER_HLS_FRAGMENTS_PER_KEY##|${RTMP_SERVER_HLS_FRAGMENTS_PER_KEY}|;s|##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL##|${RTMP_SERVER_HLS_SNAPSHOT_INTERVAL}|;s|##HTTP_SERVER_PORT##|${HTTP_SERVER_PORT}|" /templates/$RTMPSERVER.tmpl > /usr/local/nginx/conf/vhost/rtmp/hls.conf
 
 # EXEC NGINX
-printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Starting nginx (http: ${HTTP_SERVER_PORT}, rtmp: ${RTMP_SERVER_PORT})\n"
+if [ "${HTTPS_SERVER}" = "true" ]
+then
+    printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Starting nginx (http: ${HTTP_SERVER_PORT}, https: ${HTTPS_SERVER_PORT}, rtmp: ${RTMP_SERVER_PORT})\n"
+else
+    printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Starting nginx (http: ${HTTP_SERVER_PORT}, rtmp: ${RTMP_SERVER_PORT})\n"
+fi
 /usr/local/nginx/sbin/nginx

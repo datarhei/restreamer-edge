@@ -2,7 +2,7 @@ FROM debian:jessie
 
 MAINTAINER datarhei <info@datarhei.org>
 
-ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.1 \
+ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.2 \
     FFMPEG_VERSION=2.8.6 \
     YASM_VERSION=1.3.0 \
     LAME_VERSION=3_99_5 \
@@ -111,7 +111,6 @@ RUN rm -rf /var/lib/apt/lists/* && \
     rm master.zip && \
     cd nginx-release-${NGINX_VERSION} && \
     auto/configure \
-        --with-file-aio \
         --with-http_ssl_module \
         --add-module="../nginx-module-vts-master" \
         --add-module="../njs-master/nginx" \
@@ -120,21 +119,10 @@ RUN rm -rf /var/lib/apt/lists/* && \
     make install && \
     rm -rf ${DIR} && \
         
-    apt-get purge -y --auto-remove ${BUILDDEPS} && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/tmp/* && \
-    rm -rf /tmp/*
-
-ADD templates /templates
-ADD favicon.ico /usr/local/nginx/html/favicon.ico
-ADD run.sh /run.sh
-RUN mkdir /usr/local/nginx/conf/vhost && \
-    mkdir /usr/local/nginx/conf/vhost/www && \
-    mkdir /usr/local/nginx/conf/vhost/rtmp && \
-    mkdir /usr/local/nginx/html/images && \
-    chmod 777 /usr/local/nginx/html/images && \
-    chmod +x /run.sh && \
+    # letsencrypt
+    cd /opt && \
+    git clone https://github.com/letsencrypt/letsencrypt letsencrypt && \
+    letsencrypt/letsencrypt-auto --os-packages-only && \
     
     # clappr-player
     DIR=$(mktemp -d) && cd ${DIR} && \
@@ -145,7 +133,26 @@ RUN mkdir /usr/local/nginx/conf/vhost && \
     tar xzvf "master.tar.gz" && \
     rm master.tar.gz && \
     mv * /usr/local/nginx/html && \
-    rm -rf ${DIR}
+    rm -rf ${DIR} && \
+
+    apt-get purge -y --auto-remove ${BUILDDEPS} && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+ADD templates /templates
+ADD favicon.ico /usr/local/nginx/html/favicon.ico
+ADD run.sh /run.sh
+ADD snapshot.sh /snapshot.sh
+RUN mkdir /usr/local/nginx/conf/vhost && \
+    mkdir /usr/local/nginx/conf/vhost/www && \
+    mkdir /usr/local/nginx/conf/vhost/rtmp && \
+    mkdir /usr/local/nginx/html/images && \
+    chmod 777 /usr/local/nginx/html/images && \
+    chmod +x /run.sh && \
+    chmod +x /snapshot.sh && \
+    chmod 777 /snapshot.sh
     
 ENV WORKER_PROCESSES=1 \
     WORKER_CONNECTIONS=1024 \
@@ -176,18 +183,22 @@ ENV WORKER_PROCESSES=1 \
     RTMP_SERVER_HLS_MAX_CONNECTIONS=1000 \
     RTMP_SERVER_HLS_SNAPSHOT_INTERVAL=60 \
     RTMP_SERVER_HLS_TRANSCODING=false \
-    RTMP_SERVER_HLS_TRANSCODING_PROFILES=240p,360p,480p,720p \
+    RTMP_SERVER_HLS_TRANSCODING_PROFILES=240p,360p,480p,720p,native \
     RTMP_SERVER_HLS_PUBLISH_TOKEN=datarhei \
 
-    HTTP_SENDFILE=off \
+    HTTP_SENDFILE=on \
     HTTP_TCP_NOPUSH=on \
-    HTTP_AIO=on \
-    HTTP_DIRECTIO=512 \
+    HTTP_TCP_NODELAY=on \
     HTTP_ACCESS_LOG=off \
 
     HTTP_SERVER_PORT=80 \
     HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN=* \
     HTTP_SERVER_HLS_STATUS_USERNAME=admin \
-    HTTP_SERVER_HLS_STATUS_PASSWORD=datarhei
+    HTTP_SERVER_HLS_STATUS_PASSWORD=datarhei \
+    
+    HTTPS_SERVER="false" \
+    HTTPS_SERVER_PORT="443" \
+    HTTPS_CERT_MAIL="admin@example.org" \
+    HTTPS_CERT_DOMAIN="example.org"
 
 CMD ["/run.sh"]

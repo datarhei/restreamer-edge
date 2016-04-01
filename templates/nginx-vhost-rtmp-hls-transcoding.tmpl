@@ -13,9 +13,10 @@ server {
             
     application hls {
         live on;
+        exec /snapshot.sh ##RTMP_SERVER_PORT## $name ##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL##;
         exec /usr/local/bin/ffmpeg -i rtmp://127.0.0.1:##RTMP_SERVER_PORT##/hls/$name
             ##FFMPEG_COMMAND##
-            -vf fps=fps=1/##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL## -update 1 -y /usr/local/nginx/html/images/$name.jpg;
+            ;
 
         on_publish http://localhost:##HTTP_SERVER_PORT##/auth;
         notify_method get;
