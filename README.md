@@ -10,7 +10,7 @@ Currently the Restreamer-Edge is very plain and bash based application without u
 * [Enviroment playground](#enviroment-playground)
 * [Enviroment variables](#enviroment-variables)
 * [Hosting examples](#hosting-examples)
-* [Optimizations / Tips](#optimizatons-tips)
+* [Optimizations / Tips](#optimizations--tips)
 * [Help, bugs and future requests](#help-bugs-and-future-requests)
 
 ## Features
@@ -37,7 +37,7 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
 
 *Please use "datarhei/restreamer-edge-armhf:latest" for ARMv6/7 and "datarhei/restreamer-edge-aarch64:latest" for Aarch64*
 
-##### Optionally you can use an enviroment file ([file example](edge.env):
+##### Optionally you can use an enviroment file ([file example](edge.env)):
 
 ```sh
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
