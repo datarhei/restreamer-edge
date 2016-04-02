@@ -54,7 +54,7 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
   -e "WORKER_CONNECTIONS=4096"
 ```
 
-#### Live-Transcoding 240p/720p and 5 hours DvR like playlist:
+#### Live-Transcoding 240p/720p:
 
 ```sh
   -e "RTMP_SERVER_HLS_TRANSCODING=true" 
@@ -64,7 +64,7 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
 Available profiles are: 240p, 360p, 480p, 720p and native   
 *Trancoding requires high CPU power for each pushed stream!*
 
-#### 5 hours DvR like playlist
+#### 5 hours DvR like playlist:
 
 ```sh
   -e "RTMP_SERVER_HLS_PLAYLIST_LENGTH=18000" 

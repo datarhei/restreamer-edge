@@ -10,7 +10,7 @@ Changes from v0.1.0-rc.1 to v0.1.0-rc.2
   * NEW: HTTP_TCP_NODELAY "on"
   * NEW: HTTPS_SERVER "off"
   * NEW: HTTPS_SERVER_PORT "443"
-  * NEW: HTTPS_CERT_MAIL ""
-  * NEW: HTTPS_CERT_DOMAIN ""
+  * NEW: HTTPS_CERT_MAIL "admin@example.org"
+  * NEW: HTTPS_CERT_DOMAIN "example.org"
   * REMOVED: HTTP_AIO
   * REMOVED: HTTP_DIRECTIO
