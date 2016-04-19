@@ -99,7 +99,7 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 2. open the Edge-Player on your browser:   
    http://[your-edge-ip]:[http-port]/index.html?stream=mystream
 
-#### Small statistic:
+#### HTTP stat:
 
 ![VTS Stats](docs/edge-stats.png)
 
@@ -109,14 +109,14 @@ Available profiles are: 240p, 360p, 480p, 720p and native
   ```-e HTTP_AUTH_USERNAME=your-username```   
   ```-e HTTP_AUTH_PASSWORD=your-password```
 
-#### RTMP Stats
+#### RTMP stat
 
-1. Open "http://[your-edge-ip]:[http-port]/stat"
+1. Open "http://[your-edge-ip]:[http-port]/rtmp-stat"
 2. Enter your login data is set by:  
   ```-e HTTP_AUTH_USERNAME=your-username```   
   ```-e HTTP_AUTH_PASSWORD=your-password```
   
-*Alternative "http://[your-edge-ip]:[http-port]/stat.xml" or "http://[your-edge-ip]:[http-port]/stat.json"*
+*Alternative "http://[your-edge-ip]:[http-port]/rtmp-stat.xml" or "http://[your-edge-ip]:[http-port]/rtmp-stat.json"*
 
 ## Enviroment variables
 
