@@ -1,6 +1,6 @@
 # Restreamer-Edge
 
-This is an stable working concept to create a streaming service in front of the Datarhei/Restreamer.
+This is an stable working concept to create a streaming service in front of the [Datarhei/Restreamer](https://github.com/datarhei/restreamer).
 
 ![restreamer-edge](docs/idea.png)
 
@@ -29,9 +29,9 @@ Currently the Restreamer-Edge is very plain and bash based application without u
 
 ```sh
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
-  -e "HTTP_SERVER_HLS_STATUS_USERNAME=your-username" \
-  -e "HTTP_SERVER_HLS_STATUS_PASSWORD=your-password" \
-  -e "RTMP_SERVER_HLS_PUBLISH_TOKEN=your-secure-token" \
+  -e "HTTP_AUTH_USERNAME=your-username" \
+  -e "HTTP_AUTH_PASSWORD=your-password" \
+  -e "RTMP_PUBLISH_TOKEN=your-secure-token" \
       datarhei/restreamer-edge:latest
 ```
 
@@ -57,8 +57,8 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
 #### Live-Transcoding 240p/720p:
 
 ```sh
-  -e "RTMP_SERVER_HLS_TRANSCODING=true" 
-  -e "RTMP_SERVER_HLS_TRANSCODING_PROFILES=240p,720p" 
+  -e "RTMP_SRV_APP_HLS_TRANSCODING=true" 
+  -e "RTMP_SRV_APP_HLS_TRANSCODING_PROFILES=240p,720p" 
 ```
 
 Available profiles are: 240p, 360p, 480p, 720p and native   
@@ -67,7 +67,7 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 #### 5 hours DvR like playlist:
 
 ```sh
-  -e "RTMP_SERVER_HLS_PLAYLIST_LENGTH=18000" 
+  -e "RTMP_SRV_APP_HLS_HLS_PLAYLIST_LENGTH=18000" 
 ```
 
 #### Enable Access-Log and send it to STDOUT:
@@ -79,7 +79,7 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 #### Enable HTTPS/SSL:
 
 ```sh
-  -e "HTTPS_SERVER=true" 
+  -e "HTTPS_SRV=true" 
   -e "HTTPS_CERT_MAIL=admin@example.org" 
   -e "HTTPS_CERT_DOMAIN=example.org,example.com" 
   -p 443:443
@@ -88,7 +88,7 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 
 *Port 80/443 have to be forwarded to the Restreamer-Edge and the destination of your Domains have to be your host IP-Address!* 
 
-*["Error creating new cert :: Too many certificates already issued for exact set of domains"](https://community.letsencrypt.org/t/public-beta-rate-limits/4772)*
+*["Error creating new cert :: Too many certificates already issued for exact set of domains"](https://community.letsencrypt.org/t/public-beta-rate-limits/4772) - use -e "HTTPS_CERT_CREATE=false" if your cert is already installed*
 
 ## Usage
 
@@ -106,8 +106,17 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 1. Open the VTS page:   
    http://[your-edge-ip]:[http-port]/status   
 2. Enter your login data is set by:  
-  ```-e HTTP_SERVER_HLS_STATUS_USERNAME=your-username```   
-  ```-e HTTP_SERVER_HLS_STATUS_PASSWORD=your-password```
+  ```-e HTTP_AUTH_USERNAME=your-username```   
+  ```-e HTTP_AUTH_PASSWORD=your-password```
+
+#### RTMP Stats
+
+1. Open "http://[your-edge-ip]:[http-port]/stat"
+2. Enter your login data is set by:  
+  ```-e HTTP_AUTH_USERNAME=your-username```   
+  ```-e HTTP_AUTH_PASSWORD=your-password```
+  
+*Alternative "http://[your-edge-ip]:[http-port]/stat.xml" or "http://[your-edge-ip]:[http-port]/stat.json"*
 
 ## Enviroment variables
 
@@ -122,46 +131,60 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 ```sh
 WORKER_PROCESSES "1"
 WORKER_CONNECTIONS "1024"
+    
+RTMP_ACCESS_LOG "off"
 
-RTMP_SERVER_PORT "1935"
-RTMP_SERVER_TIMEOUT "60s"
-RTMP_SERVER_PING "3m"
-RTMP_SERVER_PING_TIMEOUT "30s"
-RTMP_SERVER_MAX_STREAMS "32"
-RTMP_SERVER_ACK_WINDOW "5000000"
-RTMP_SERVER_CHUNK_SIZE "4000"
-RTMP_SERVER_MAX_MESSAGE "1M"
-RTMP_SERVER_BUFLEN "5s"
-RTMP_SERVER_HLS_FRAGMENT "2s"
-RTMP_SERVER_HLS_PLAYLIST_LENGTH "60"
-RTMP_SERVER_HLS_SYNC "1ms"
-RTMP_SERVER_HLS_CONTINOUS "off"
-RTMP_SERVER_HLS_NESTED "off"
-RTMP_SERVER_HLS_CLEANUP "on"
-RTMP_SERVER_HLS_FRAGMENT_NAMING "sequential"
-RTMP_SERVER_HLS_FRAGMENT_NAMING_GRANULARITY "0"
-RTMP_SERVER_HLS_FRAGMENT_SLICING "plain"
-RTMP_SERVER_HLS_TYPE "live"
-RTMP_SERVER_HLS_KEY "off"
-RTMP_SERVER_HLS_FRAGMENTS_PER_KEY "0"
-RTMP_SERVER_HLS_MAX_CONNECTIONS "1000"
-RTMP_SERVER_HLS_SNAPSHOT_INTERVAL "60"
-RTMP_SERVER_HLS_TRANSCODING "false"
-RTMP_SERVER_HLS_TRANSCODING_PROFILES "240p,360p,480p,720p,native"
-RTMP_SERVER_HLS_PUBLISH_TOKEN "datarhei"
+RTMP_SRV_PORT "1935"
+RTMP_SRV_TIMEOUT "60s"
+RTMP_SRV_PING "3m"
+RTMP_SRV_PING_TIMEOUT "30s"
+RTMP_SRV_MAX_STREAMS "32"
+RTMP_SRV_ACK_WINDOW "5000000"
+RTMP_SRV_CHUNK_SIZE "4096"
+RTMP_SRV_MAX_MESSAGE "1M"
+RTMP_SRV_BUFLEN "5s"
+    
+RTMP_SRV_APP_HLS_INTERLEAVE "on"
+RTMP_SRV_APP_HLS_META "copy"
+RTMP_SRV_APP_HLS_WAIT_KEY "on"
+RTMP_SRV_APP_HLS_WAIT_VIDEO "on"
+RTMP_SRV_APP_HLS_DROP_IDLE_PUBLISHER "10s"
+RTMP_SRV_APP_HLS_SYNC "10ms"
+RTMP_SRV_APP_HLS_IDLE_STREAMS "off"
+    
+RTMP_SRV_APP_HLS_HLS_FRAGMENT "2s"
+RTMP_SRV_APP_HLS_HLS_PLAYLIST_LENGTH "60"
+RTMP_SRV_APP_HLS_HLS_SYNC "1ms"
+RTMP_SRV_APP_HLS_HLS_CONTINOUS "off"
+RTMP_SRV_APP_HLS_HLS_NESTED "off"
+RTMP_SRV_APP_HLS_HLS_CLEANUP "on"
+RTMP_SRV_APP_HLS_HLS_FRAGMENT_NAMING "sequential"
+RTMP_SRV_APP_HLS_HLS_FRAGMENT_NAMING_GRANULARITY "0"
+RTMP_SRV_APP_HLS_HLS_FRAGMENT_SLICING "plain"
+RTMP_SRV_APP_HLS_HLS_TYPE "live"
+RTMP_SRV_APP_HLS_HLS_KEY "off"
+RTMP_SRV_APP_HLS_HLS_FRAGMENTS_PER_KEY "0"
+    
+RTMP_SRV_APP_HLS_SNAPSHOT_INTERVAL "60"
+RTMP_SRV_APP_HLS_TRANSCODING "false"
+RTMP_SRV_APP_HLS_TRANSCODING_PROFILES "240p,360p,480p,720p,native"
+
+RTMP_PUBLISH_TOKEN "datarhei"
 
 HTTP_SENDFILE "on"
 HTTP_TCP_NOPUSH "on"
 HTTP_TCP_NODELAY "on"
 HTTP_ACCESS_LOG "off"
 
-HTTP_SERVER_PORT "80"
-HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN "*"
-HTTP_SERVER_HLS_STATUS_USERNAME "admin"
-HTTP_SERVER_HLS_STATUS_PASSWORD "datarhei"
+HTTP_SRV_PORT "80"
+HTTP_SRV_LOC_HLS_ACCESS_CONTROL_ALLOW_ORIGIN "*"
 
-HTTPS_SERVER "false"
-HTTPS_SERVER_PORT "443"
+HTTP_AUTH_USERNAME "admin"
+HTTP_AUTH_PASSWORD "datarhei"
+    
+HTTPS_SRV "false"
+HTTPS_SRV_PORT "443"
+HTTPS_CERT_CREATE "true"
 HTTPS_CERT_MAIL "admin@example.org"
 HTTPS_CERT_DOMAIN "example.org"
 ```
@@ -180,9 +203,9 @@ HTTPS_CERT_DOMAIN "example.org"
 write_files:
   - path: /etc/restreamer-edge.env
     content: |
-      RTMP_SERVER_HLS_PUBLISH_TOKEN=datarhei
-      HTTP_SERVER_HLS_STATUS_USERNAME=admin
-      HTTP_SERVER_HLS_STATUS_PASSWORD=datarhei
+      RTMP_SRV_APP_HLS_PUBLISH_TOKEN=datarhei
+      HTTP_AUTH_USERNAME=admin
+      HTTP_AUTH_PASSWORD=datarhei
 coreos:
   units:
     - name: restreamer-edge.service
@@ -215,17 +238,17 @@ coreos:
    * for an ARM instance:   
    ```sh 
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
-  -e "HTTP_SERVER_HLS_STATUS_USERNAME=admin" \
-  -e "HTTP_SERVER_HLS_STATUS_PASSWORD=datarhei" \
-  -e "RTMP_SERVER_HLS_PUBLISH_TOKEN=datarhei" \
+  -e "HTTP_AUTH_USERNAME=admin" \
+  -e "HTTP_AUTH_PASSWORD=datarhei" \
+  -e "RTMP_PUBLISH_TOKEN=datarhei" \
       datarhei/restreamer-edge-armhf:latest
    ```
    * For an x86 instance:   
    ```sh
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
-  -e "HTTP_SERVER_HLS_STATUS_USERNAME=admin" \
-  -e "HTTP_SERVER_HLS_STATUS_PASSWORD=datarhei" \
-  -e "RTMP_SERVER_HLS_PUBLISH_TOKEN=datarhei" \
+  -e "HTTP_AUTH_USERNAME=admin" \
+  -e "HTTP_AUTH_PASSWORD=datarhei" \
+  -e "RTMP_PUBLISH_TOKEN=datarhei" \
       datarhei/restreamer-edge:latest
    ```
 5. Wait few minutes, then you can push the stream to "rtmp://[your-server-ip]:1935/hls/mystream?token=datarhei". Open the Player/Stream "http://[your-server-ip]:80/?stream=mystream"
@@ -258,9 +281,9 @@ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" m
 		"volumes": []
 	},
 	"env": {
-		"RTMP_SERVER_HLS_PUBLISH_TOKEN": "datarhei",
-		"HTTP_SERVER_HLS_STATUS_USERNAME": "admin",
-		"HTTP_SERVER_HLS_STATUS_PASSWORD": "datarhei"
+		"RTMP_PUBLISH_TOKEN": "datarhei",
+		"HTTP_AUTH_USERNAME": "admin",
+		"HTTP_AUTH_PASSWORD": "datarhei"
 	},
 	"cpus": 1,
 	"mem": 1024,

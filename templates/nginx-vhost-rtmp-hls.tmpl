@@ -1,38 +1,47 @@
 server {
     
-    listen ##RTMP_SERVER_PORT##;
+    listen ##RTMP_SRV_PORT##;
         
-    timeout ##RTMP_SERVER_TIMEOUT##;
-    ping ##RTMP_SERVER_PING##;
-    ping_timeout ##RTMP_SERVER_PING_TIMEOUT##;
-    max_streams ##RTMP_SERVER_MAX_STREAMS##;
-    ack_window ##RTMP_SERVER_ACK_WINDOW##;
-    chunk_size ##RTMP_SERVER_CHUNK_SIZE##;
-    max_message ##RTMP_SERVER_MAX_MESSAGE##;
-    buflen ##RTMP_SERVER_BUFLEN##;
+    timeout ##RTMP_SRV_TIMEOUT##;
+    ping ##RTMP_SRV_PING##;
+    ping_timeout ##RTMP_SRV_PING_TIMEOUT##;
+    max_streams ##RTMP_SRV_MAX_STREAMS##;
+    ack_window ##RTMP_SRV_ACK_WINDOW##;
+    chunk_size ##RTMP_SRV_CHUNK_SIZE##;
+    max_message ##RTMP_SRV_MAX_MESSAGE##;
+    buflen ##RTMP_SRV_BUFLEN##;
         
     application hls {
         live on;
+        
+        interleave ##RTMP_SRV_APP_HLS_INTERLEAVE##;
+        meta ##RTMP_SRV_APP_HLS_META##;
+        wait_key ##RTMP_SRV_APP_HLS_WAIT_KEY##;
+        wait_video ##RTMP_SRV_APP_HLS_WAIT_VIDEO##;
+        drop_idle_publisher ##RTMP_SRV_APP_HLS_DROP_IDLE_PUBLISHER##;
+        sync ##RTMP_SRV_APP_HLS_SYNC##;
+        idle_streams ##RTMP_SRV_APP_HLS_IDLE_STREAMS##;
+        
         hls on;
         hls_path /tmp/hls;
             
-        hls_fragment ##RTMP_SERVER_HLS_FRAGMENT##;
-        hls_playlist_length ##RTMP_SERVER_HLS_PLAYLIST_LENGTH##;
-        hls_sync ##RTMP_SERVER_HLS_SYNC##;
-        hls_continuous ##RTMP_SERVER_HLS_CONTINOUS##;
-        hls_nested ##RTMP_SERVER_HLS_NESTED##;
-        hls_cleanup ##RTMP_SERVER_HLS_CLEANUP##;
-        hls_fragment_naming ##RTMP_SERVER_HLS_FRAGMENT_NAMING##;
-        hls_fragment_naming_granularity ##RTMP_SERVER_HLS_FRAGMENT_NAMING_GRANULARITY##;
-        hls_fragment_slicing ##RTMP_SERVER_HLS_FRAGMENT_SLICING##;
-        hls_type ##RTMP_SERVER_HLS_TYPE##;
-        hls_keys ##RTMP_SERVER_HLS_KEY##;
+        hls_fragment ##RTMP_SRV_APP_HLS_HLS_FRAGMENT##;
+        hls_playlist_length ##RTMP_SRV_APP_HLS_HLS_PLAYLIST_LENGTH##;
+        hls_sync ##RTMP_SRV_APP_HLS_HLS_SYNC##;
+        hls_continuous ##RTMP_SRV_APP_HLS_HLS_CONTINOUS##;
+        hls_nested ##RTMP_SRV_APP_HLS_HLS_NESTED##;
+        hls_cleanup ##RTMP_SRV_APP_HLS_HLS_CLEANUP##;
+        hls_fragment_naming ##RTMP_SRV_APP_HLS_HLS_FRAGMENT_NAMING##;
+        hls_fragment_naming_granularity ##RTMP_SRV_APP_HLS_HLS_FRAGMENT_NAMING_GRANULARITY##;
+        hls_fragment_slicing ##RTMP_SRV_APP_HLS_HLS_FRAGMENT_SLICING##;
+        hls_type ##RTMP_SRV_APP_HLS_HLS_TYPE##;
+        hls_keys ##RTMP_SRV_APP_HLS_HLS_KEY##;
         hls_key_path /tmp/keys;
-        hls_fragments_per_key ##RTMP_SERVER_HLS_FRAGMENTS_PER_KEY##;
+        hls_fragments_per_key ##RTMP_SRV_APP_HLS_HLS_FRAGMENTS_PER_KEY##;
                     
-        exec /snapshot.sh ##RTMP_SERVER_PORT## $name ##RTMP_SERVER_HLS_SNAPSHOT_INTERVAL##;
+        exec /snapshot.sh ##RTMP_SRV_PORT## $name ##RTMP_SRV_APP_HLS_SNAPSHOT_INTERVAL##;
             
-        on_publish http://localhost:##HTTP_SERVER_PORT##/auth;
+        on_publish http://127.0.0.1:##HTTP_SRV_PORT##/auth;
         notify_method get;
             
     }

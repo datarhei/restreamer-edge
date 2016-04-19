@@ -1,6 +1,6 @@
 server {
 
-    listen ##HTTPS_SERVER_PORT##;
+    listen ##HTTPS_SRV_PORT##;
     
     ssl on;
     
@@ -25,34 +25,35 @@ server {
         }
         root /tmp;
         add_header Cache-Control no-cache;
-        add_header Access-Control-Allow-Origin ##HTTP_SERVER_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##;
+        add_header Access-Control-Allow-Origin ##HTTP_SRV_LOC_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##;
     }
     
     location /status {
         auth_basic "Restricted";
-        auth_basic_user_file status.htpasswd;
+        auth_basic_user_file auth.htpasswd;
         vhost_traffic_status_display;
         vhost_traffic_status_display_format html;
     }
     
-    location /auth {
-        js_run "
-            var token = $r.args['token'];
-            var res = $r.response;
-            res.contentType = 'text/plain';
-            if(token == '##RTMP_SERVER_HLS_PUBLISH_TOKEN##'){
-                res.status =  200;
-                res.sendHeader();
-                res.send( 'OK' );
-            }else{
-                res.status =  401;
-                res.sendHeader();
-                res.send( 'Unauthorized' );
-            }
-            res.finish();
-        ";
-        allow 127.0.0.1;
-        deny all;
+    location /rtmp-stat {
+        auth_basic "Restricted";
+        auth_basic_user_file auth.htpasswd;
+        rtmp_stat all;
+        rtmp_stat_stylesheet info.xsl;
+    }
+
+    location /rtmp-stat.xml {
+        auth_basic "Restricted";
+        auth_basic_user_file auth.htpasswd;
+        rtmp_stat all;
+    }
+
+    location /rtmp-stat.json {
+        auth_basic "Restricted";
+        auth_basic_user_file auth.htpasswd;
+        proxy_pass       http://127.0.0.1/rtmp-stat.xml;
+        xml_entities     /usr/local/nginx/conf/entities.dtd;
+        xslt_stylesheet  /usr/local/nginx/conf/xml2json.xsl;
     }
     
 }

@@ -4,3 +4,5 @@ Dockerfile*
 .gitignore
 /docs
 *.md
+*.env
+LICENSE
