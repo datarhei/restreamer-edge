@@ -29,7 +29,7 @@
             }
         }
         var player = new Clappr.Player({
-            source: "//" + window.location.hostname + ":" + window.location.port + "/hls/" + streamName + ".m3u8",
+            source: "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '')  + "/hls/" + streamName + ".m3u8",
             parentId: "#player",
             mediacontrol: {seekbar: "#3daa48", buttons: "#3daa48"},
             poster: "images/" + streamName + ".jpg",
