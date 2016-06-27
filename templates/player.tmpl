@@ -7,15 +7,15 @@
     <meta name="description" content="Restreamer-Edge">
     <meta name="author" content="datarhei">
     <title>Restreamer-Edge</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-    <script src=https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script> 
     <script type="text/javascript" src="clappr-master/dist/clappr.min.js"></script>
+    <style>
+        .player-poster[data-poster] .poster-background[data-poster] {
+            height: initial !important;
+        }
+    </style>
 </head>
 <body style="background-color:#000">
-    <div class="embed-responsive embed-responsive-16by9">
-        <div id="player" class="embed-responsive-item"></div>
-    </div>
+    <div id="player" style="position:absolute;top:0;right:0;bottom:0;left:0"></div>
     <script>
         var streamName = getParam("stream");
         function getParam(value) {
