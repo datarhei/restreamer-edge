@@ -1,8 +1,23 @@
+js_include /usr/local/nginx/rtmp_auth.js;
+
+lua_shared_dict prometheus_metrics 10M;
+lua_package_path "/usr/local/nginx/prometheus.lua";
+init_by_lua '
+  prometheus = require("prometheus").init("prometheus_metrics")
+  metric_requests = prometheus:counter(
+    "nginx_http_requests_total", "Number of HTTP requests", {"host", "status"})
+  metric_latency = prometheus:histogram(
+    "nginx_http_request_duration_seconds", "HTTP request latency", {"host"})
+';
+log_by_lua '
+  local host = ngx.var.host:gsub("^www.", "")
+  metric_requests:inc(1, {host, ngx.var.status})
+  metric_latency:observe(ngx.now() - ngx.req.start_time(), {host})
+';
+
 server {
 
     listen ##HTTP_SRV_PORT##;
-    
-    vhost_traffic_status_filter_by_set_key $server_name:$uri;
     
     location /index.html {
         root /usr/local/nginx/html/;
@@ -19,33 +34,22 @@ server {
         add_header Access-Control-Allow-Origin ##HTTP_SRV_LOC_HLS_ACCESS_CONTROL_ALLOW_ORIGIN##;
     }
     
-    location /status {
-        auth_basic "Restricted";
-        auth_basic_user_file auth.htpasswd;
-        vhost_traffic_status_display;
-        vhost_traffic_status_display_format html;
-    }
-    
     location /auth {
-        js_run "
-            var token = $r.args['token'];
-            var res = $r.response;
-            res.contentType = 'text/plain';
-            if(token == '##RTMP_PUBLISH_TOKEN##'){
-                res.status =  200;
-                res.sendHeader();
-                res.send( 'OK' );
-            }else{
-                res.status =  401;
-                res.sendHeader();
-                res.send( 'Unauthorized' );
-            }
-            res.finish();
-        ";
+        js_content rtmp_auth;
         allow 127.0.0.1;
         deny all;
     }
     
+    location /status {
+      stub_status_prometheus;
+    }
+    
+    location /metrics {
+        auth_basic "Restricted";
+        auth_basic_user_file auth.htpasswd;
+        content_by_lua 'prometheus:collect()';
+    }
+
     location /rtmp-stat {
         auth_basic "Restricted";
         auth_basic_user_file auth.htpasswd;

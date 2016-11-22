@@ -29,12 +29,16 @@
             }
         }
         var player = new Clappr.Player({
-            source: "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '')  + "/hls/" + streamName + ".m3u8",
+            source: "//" + window.location.hostname + ":" + window.location.port + "/hls/" + streamName + ".m3u8",
             parentId: "#player",
-            mediacontrol: {seekbar: "#3daa48", buttons: "#3daa48"},
+            mediacontrol: {seekbar: "###PLAYER_COLOR_SEEKBAR##", buttons: "###PLAYER_COLOR_BUTTONS##"},
             poster: "images/" + streamName + ".jpg",
             height: "100%",
             width: "100%"
+            ##GACCOUNT##
+            ##GATRACKERNAME##
+            ##WATERMARK##
+            ##WATERMARKLINK##
         });
     </script>
 </body>

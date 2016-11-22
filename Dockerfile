@@ -1,13 +1,20 @@
 FROM debian:jessie
 
 MAINTAINER datarhei <info@datarhei.org>
-
-ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.3 \
-    FFMPEG_VERSION=2.8.6 \
+ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.4 \
+    FFMPEG_VERSION=3.1.2 \
     YASM_VERSION=1.3.0 \
     LAME_VERSION=3_99_5 \
-    NGINX_VERSION=1.9.9 \
-    NGINX_RTMP_VERSION=1.1.7.10 \
+    NGINX_VERSION=1.10.2 \
+    NGINX_RTMP_VERSION=master \
+    NGINX_NJS=master \
+    NGINX_DEVEL_KIT_VERSION=0.3.0 \
+    NGINX_STUB_STATUS_PROM=master \
+    LUA_NGINX_MODULE_VERSION=0.10.7 \
+    LUAJIT_VERSION=2.0.4 \
+    LUAJIT_MAJOR_VERSION=2.0 \
+    LUAJIT_LIB=/usr/local/lib \
+    LUAJIT_INC=/usr/local/include/luajit-2.0 \
 
     SRC="/usr/local" \
     LD_LIBRARY_PATH="${SRC}/lib" \
@@ -16,8 +23,10 @@ ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.3 \
     BUILDDEPS="autoconf automake gcc g++ libtool make nasm unzip zlib1g-dev libssl-dev xz-utils cmake build-essential libpcre3-dev"
 
 RUN rm -rf /var/lib/apt/lists/* && \
-    apt-get update --fix-missing && \
-    apt-get install -y --force-yes curl git libpcre3 tar perl ca-certificates apache2-utils libaio1 libxml2 libxslt-dev ${BUILDDEPS} && \
+    apt-get update && \
+    apt-get install -y --force-yes --fix-missing apt-utils && \
+    apt-get upgrade -y && \
+    apt-get install -y --force-yes --fix-missing curl git libpcre3 tar perl ca-certificates apache2-utils libaio1 libxml2 libxslt-dev ${BUILDDEPS} && \
 
     # yasm
     DIR="$(mktemp -d)" && cd "${DIR}" && \
@@ -62,12 +71,10 @@ RUN rm -rf /var/lib/apt/lists/* && \
     rm -rf "${DIR}" && \
 
     # ffmpeg
-    # patch: andrew-shulgin Ignore invalid sprop-parameter-sets missing PPS
     DIR="$(mktemp -d)" && cd "${DIR}" && \
     curl -LOks "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
     tar xzvf "ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
     cd "ffmpeg-${FFMPEG_VERSION}" && \
-    curl -Lks "https://github.com/FFmpeg/FFmpeg/commit/1c7e2cf9d33968375ee4025d2279c937e147dae2.patch" | patch -p1 && \
     ./configure \
         --prefix="${SRC}" \
         --bindir="${SRC}/bin" \
@@ -97,25 +104,42 @@ RUN rm -rf /var/lib/apt/lists/* && \
     echo "${SRC}/lib" > "/etc/ld.so.conf.d/libc.conf" && \
     ffmpeg -buildconf && \
 
-    # nginx-rtmp
+    # LuaJIT
     DIR=$(mktemp -d) && cd ${DIR} && \
+    curl -LOks "http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.zip" && \
+    unzip LuaJIT-${LUAJIT_VERSION} && \
+    cd LuaJIT-${LUAJIT_VERSION} && \
+    make install && \
+    ln -sf luajit-${LUAJIT_VERSION} /usr/local/bin/luajit && \
+    rm -rf ${DIR}
+
+    # nginx-rtmp
+RUN DIR=$(mktemp -d) && cd ${DIR} && \
     curl -LOks "https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz" && \
     tar xzvf "release-${NGINX_VERSION}.tar.gz" && \
-    curl -LOks "https://github.com/sergey-dryabzhinsky/nginx-rtmp-module/archive/v${NGINX_RTMP_VERSION}.tar.gz" && \
-    tar xzvf "v${NGINX_RTMP_VERSION}.tar.gz" && \
-    curl -LOks https://github.com/vozlt/nginx-module-vts/archive/master.zip && \
-    unzip master.zip && \
-    rm master.zip && \
-    curl -LOks https://github.com/nginx/njs/archive/master.zip && \
-    unzip master.zip && \
-    rm master.zip && \
+    curl -LOks "https://github.com/sergey-dryabzhinsky/nginx-rtmp-module/archive/${NGINX_RTMP_VERSION}.tar.gz" && \
+    tar xzvf "${NGINX_RTMP_VERSION}.tar.gz" && \
+    curl -LOks https://github.com/nginx/njs/archive/${NGINX_NJS}.zip && \
+    unzip ${NGINX_NJS}.zip && \
+    curl -LOks "https://github.com/simpl/ngx_devel_kit/archive/v${NGINX_DEVEL_KIT_VERSION}.zip" -O && \
+    unzip v${NGINX_DEVEL_KIT_VERSION}.zip && \
+    curl -LOks "https://github.com/openresty/lua-nginx-module/archive/v${LUA_NGINX_MODULE_VERSION}.zip" && \
+    unzip v${LUA_NGINX_MODULE_VERSION}.zip && \
+    curl -LOks "https://github.com/mhowlett/ngx_stub_status_prometheus/archive/${NGINX_STUB_STATUS_PROM}.zip" && \
+    unzip ${NGINX_STUB_STATUS_PROM}.zip && \
     cd nginx-release-${NGINX_VERSION} && \
     auto/configure \
         --with-http_ssl_module \
         --with-http_xslt_module \
-        --add-module="../nginx-module-vts-master" \
-        --add-module="../njs-master/nginx" \
-        --add-module="../nginx-rtmp-module-${NGINX_RTMP_VERSION}" && \
+        --with-ld-opt="-Wl,-rpath,/usr/local/lib/lua" \
+        --with-http_ssl_module \
+        --with-http_realip_module \
+        --with-http_stub_status_module \
+        --add-dynamic-module="../njs-${NGINX_NJS}/nginx" \
+        --add-dynamic-module="../nginx-rtmp-module-${NGINX_RTMP_VERSION}" \
+        --add-module="../ngx_devel_kit-${NGINX_DEVEL_KIT_VERSION}" \
+        --add-module="../lua-nginx-module-${LUA_NGINX_MODULE_VERSION}" \
+        --add-dynamic-module="../ngx_stub_status_prometheus-${NGINX_STUB_STATUS_PROM}" && \
     make -j"$(nproc)" && \
     make install && \
     cp ../nginx-rtmp-module-${NGINX_RTMP_VERSION}/stat.xsl /usr/local/nginx/html/info.xsl && \
@@ -127,8 +151,9 @@ RUN rm -rf /var/lib/apt/lists/* && \
         
     # letsencrypt
     cd /opt && \
-    git clone https://github.com/letsencrypt/letsencrypt letsencrypt && \
-    letsencrypt/letsencrypt-auto --os-packages-only && \
+    curl -LOks https://dl.eff.org/certbot-auto && \
+    chmod a+x ./certbot-auto && \
+    ./certbot-auto --os-packages-only --noninteractive && \
     
     # clappr-player
     DIR=$(mktemp -d) && cd ${DIR} && \
@@ -140,6 +165,10 @@ RUN rm -rf /var/lib/apt/lists/* && \
     rm master.tar.gz && \
     mv * /usr/local/nginx/html && \
     rm -rf ${DIR} && \
+
+    # prometheus exporter
+    cd /usr/local/nginx/ && \
+    curl -LOks "https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/master/prometheus.lua" && \
 
     apt-get purge -y --auto-remove ${BUILDDEPS} && \
     apt-get clean -y && \
@@ -215,8 +244,21 @@ ENV WORKER_PROCESSES=1 \
     
     HTTPS_SRV=false \
     HTTPS_SRV_PORT=443 \
-    HTTPS_CERT_CREATE=true \
-    HTTPS_CERT_MAIL=admin@example.org \
-    HTTPS_CERT_DOMAIN=example.org
+    HTTPS_SRV_CERT_DOMAIN=example.org \
+    
+    HTTPS_LETSENCRYPT=false \
+    HTTPS_LETSENCRYPT_MAIL=admin@example.org \
+    
+    PLAYER_CREATE=true \
+    
+    PLAYER_WATERMARK_SOURCE=none \
+    PLAYER_WATERMARK_POSITION=top-right \
+    PLAYER_WATERMARK_LINK=none \
+
+    PLAYER_COLOR_BUTTONS=3daa48 \
+    PLAYER_COLOR_SEEKBAR=3daa48 \
+
+    PLAYER_GA_ACCOUNT=none \
+    PLAYER_GA_TRACKERNAME=datarheiEdge
 
 CMD ["/run.sh"]

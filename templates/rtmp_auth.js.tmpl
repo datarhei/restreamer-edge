@@ -1,0 +1,16 @@
+function rtmp_auth(req, res) {
+    var token = $r.args['token'];
+    var res = $r.response;
+    res.contentType = 'text/plain';
+    if (token == '##RTMP_PUBLISH_TOKEN##') {
+        res.status = 200;
+        res.sendHeader();
+        res.send('OK');
+    }
+    else {
+        res.status = 401;
+        res.sendHeader();
+        res.send('Unauthorized');
+    }
+    res.finish();
+}

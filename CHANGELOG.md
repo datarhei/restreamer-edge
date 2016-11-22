@@ -1,3 +1,31 @@
+Changes from v0.1.0-rc.3 to v0.1.0-rc.4
+
+* Updates and extentions:
+  * NGINX 1.9.9 -> 1.10.2
+  * NGINX-RTMP -> latest Sergey-Version (fix-hls-playlist-length-on-varsize-fragments)
+  * FFmpeg 2.8.6 -> 3.1.2
+* added LUAJIT and the LUA-NGINX module
+* added NGINX exporter (status and metrics) for [Prometheus.io](https://prometheus.io)
+* switched to [certbot-auto](https://certbot.eff.org/) for better Let's Encrypt workflows
+* removed VTS module (heavy load with hls-chunks)
+* removed RTMP_AUTO_PUSH function (faulty)
+* modified (default) env:
+  * NEW:
+    * PLAYER_CREATE "true"
+    * PLAYER_WATERMARK_SOURCE "none"
+    * PLAYER_WATERMARK_POSITION "top-right"
+    * PLAYER_WATERMARK_LINK "none"
+    * PLAYER_COLOR_BUTTONS "3daa48"
+    * PLAYER_COLOR_SEEKBAR "3daa48"
+    * PLAYER_GA_ACCOUNT "none"
+    * PLAYER_GA_TRACKERNAME "datarheiEdge"
+  * RENAMED:
+    * HTTPS_CERT_DOMAIN -> HTTPS_SRV_CERT_DOMAIN
+    * HTTPS_CERT_CREATE -> HTTPS_LETSENCRYPT
+    * HTTPS_CERT_MAIL -> HTTPS_LETSENCRYPT_MAIL
+  * REMOVED:
+    * RTMP_AUTO_PUSH (faulty)
+
 Changes from v0.1.0-rc.2 to v0.1.0-rc.3
 
 * enabled rtmp-stats (html/xml/json)

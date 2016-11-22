@@ -17,7 +17,8 @@ Currently the Restreamer-Edge is very plain and bash based application without u
 
 * [NGINX](http://nginx.org/) open source web server for high traffic
 * [NGINX-RTMP-Module](https://github.com/arut/nginx-rtmp-module) as streaming-backend and HLS server
-* [NGINX virtual host traffic status module](https://github.com/vozlt/nginx-module-vts) for http/hls-stats
+* [NGINX Stub Status](https://github.com/mhowlett/ngx_stub_status_prometheus) for Prometheus.io
+* [NGINX Metrics](https://github.com/knyar/nginx-lua-prometheus) for Prometheus.io
 * [NJS](https://github.com/nginx/njs) for the rtmp-authentification
 * [Clappr-Player](https://github.com/clappr/clappr) as HLS-player to embed your stream upon your website (no Adobe Flash)
 * [FFmpeg](http://ffmpeg.org) to create snapshots and live-transcode (if enabled) each is pushing streams to 240p, 360p, 480p and 720p
@@ -76,19 +77,36 @@ Available profiles are: 240p, 360p, 480p, 720p and native
   -e "HTTP_ACCESS_LOG=/dev/stdout" 
 ```
 
-#### Enable HTTPS/SSL:
+#### Enable HTTPS/SSL and Let's Encrypt:
 
 ```sh
   -e "HTTPS_SRV=true" 
-  -e "HTTPS_CERT_MAIL=admin@example.org" 
-  -e "HTTPS_CERT_DOMAIN=example.org,example.com" 
+  -e "HTTPS_SRV_CERT_DOMAIN=example.org,example.com" 
+  -e "HTTPS_LETSENCRYPT=true"
+  -e "HTTPS_LETSENCRYPT_MAIL=admin@example.org"
   -p 443:443
   -v /mnt/restreamer-edge/letsencrypt:/etc/letsencrypt
 ```
 
 *Port 80/443 have to be forwarded to the Restreamer-Edge and the destination of your Domains have to be your host IP-Address!* 
 
-*["Error creating new cert :: Too many certificates already issued for exact set of domains"](https://community.letsencrypt.org/t/public-beta-rate-limits/4772) - use -e "HTTPS_CERT_CREATE=false" if your cert is already installed*
+##### To auto renew your Let's Encrypt certificat you can use cron/systemd like:
+
+```sh
+  0 0 * * * /usr/bin/docker restart restreamer-edge >/dev/null 2>&1
+```
+
+#### Customize your Player
+
+```sh
+  -e "PLAYER_WATERMARK_SOURCE=http://datarhei.org/logo.png" 
+  -e "PLAYER_WATERMARK_POSITION=top-left" 
+  -e "PLAYER_WATERMARK_LINK=http://datarhei.org" 
+  -e "PLAYER_COLOR_BUTTONS=000000" 
+  -e "PLAYER_COLOR_SEEKBAR=000000"
+  -e "PLAYER_GA_ACCOUNT=UE123456"
+  -e "PLAYER_GA_TRACKERNAME=datarheiDemoEdge1"
+```
 
 ## Usage
 
@@ -99,12 +117,16 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 2. open the Edge-Player on your browser:   
    http://[your-edge-ip]:[http-port]/index.html?stream=mystream
 
-#### HTTP stat:
+#### NGINX-Exporter for Prometheus.io:
 
-![VTS Stats](docs/edge-stats.png)
-
-1. Open the VTS page:   
+1. Open stauts page:  
    http://[your-edge-ip]:[http-port]/status   
+2. Enter your login data is set by:  
+  ```-e HTTP_AUTH_USERNAME=your-username```   
+  ```-e HTTP_AUTH_PASSWORD=your-password```
+
+1. Open metrics page:  
+   http://[your-edge-ip]:[http-port]/metrics   
 2. Enter your login data is set by:  
   ```-e HTTP_AUTH_USERNAME=your-username```   
   ```-e HTTP_AUTH_PASSWORD=your-password```
@@ -124,14 +146,14 @@ Available profiles are: 240p, 360p, 480p, 720p and native
 
 * NGINX [description](http://nginx.org/en/docs/ngx_core_module.html)
 * NGINX RTMP [description](https://github.com/sergey-dryabzhinsky/nginx-rtmp-module/blob/master/doc/directives.md)
-* NGINX VTS [description](https://github.com/vozlt/nginx-module-vts)
+* Clappr-Player [description](https://github.com/clappr/clappr/blob/master/doc/BUILTIN_PLUGINS.md)
 
 #### Default values
 
 ```sh
 WORKER_PROCESSES "1"
 WORKER_CONNECTIONS "1024"
-    
+
 RTMP_ACCESS_LOG "off"
 
 RTMP_SRV_PORT "1935"
@@ -143,7 +165,7 @@ RTMP_SRV_ACK_WINDOW "5000000"
 RTMP_SRV_CHUNK_SIZE "4096"
 RTMP_SRV_MAX_MESSAGE "1M"
 RTMP_SRV_BUFLEN "5s"
-    
+
 RTMP_SRV_APP_HLS_INTERLEAVE "on"
 RTMP_SRV_APP_HLS_META "copy"
 RTMP_SRV_APP_HLS_WAIT_KEY "on"
@@ -151,7 +173,7 @@ RTMP_SRV_APP_HLS_WAIT_VIDEO "on"
 RTMP_SRV_APP_HLS_DROP_IDLE_PUBLISHER "10s"
 RTMP_SRV_APP_HLS_SYNC "10ms"
 RTMP_SRV_APP_HLS_IDLE_STREAMS "off"
-    
+
 RTMP_SRV_APP_HLS_HLS_FRAGMENT "2s"
 RTMP_SRV_APP_HLS_HLS_PLAYLIST_LENGTH "60"
 RTMP_SRV_APP_HLS_HLS_SYNC "1ms"
@@ -164,7 +186,7 @@ RTMP_SRV_APP_HLS_HLS_FRAGMENT_SLICING "plain"
 RTMP_SRV_APP_HLS_HLS_TYPE "live"
 RTMP_SRV_APP_HLS_HLS_KEY "off"
 RTMP_SRV_APP_HLS_HLS_FRAGMENTS_PER_KEY "0"
-    
+
 RTMP_SRV_APP_HLS_SNAPSHOT_INTERVAL "60"
 RTMP_SRV_APP_HLS_TRANSCODING "false"
 RTMP_SRV_APP_HLS_TRANSCODING_PROFILES "240p,360p,480p,720p,native"
@@ -181,12 +203,25 @@ HTTP_SRV_LOC_HLS_ACCESS_CONTROL_ALLOW_ORIGIN "*"
 
 HTTP_AUTH_USERNAME "admin"
 HTTP_AUTH_PASSWORD "datarhei"
-    
+
 HTTPS_SRV "false"
 HTTPS_SRV_PORT "443"
-HTTPS_CERT_CREATE "true"
-HTTPS_CERT_MAIL "admin@example.org"
-HTTPS_CERT_DOMAIN "example.org"
+HTTPS_SRV_CERT_DOMAIN "example.org"
+
+HTTPS_LETSENCRYPT "false"
+HTTPS_LETSENCRYPT_MAIL "admin@example.org"
+
+PLAYER_CREATE "true"
+
+PLAYER_WATERMARK_SOURCE "none"
+PLAYER_WATERMARK_POSITION "top-right"
+PLAYER_WATERMARK_LINK "none"
+
+PLAYER_COLOR_BUTTONS "3daa48"
+PLAYER_COLOR_SEEKBAR "3daa48"
+
+PLAYER_GA_ACCOUNT "none"
+PLAYER_GA_TRACKERNAME "datarheiEdge"
 ```
 
 ## Hosting examples

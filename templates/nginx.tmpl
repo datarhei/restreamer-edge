@@ -2,11 +2,12 @@ error_log stderr;
 
 worker_processes ##WORKER_PROCESSES##;
 
+load_module modules/ngx_http_js_module.so;
+load_module modules/ngx_rtmp_module.so;
+
 events {
     worker_connections ##WORKER_CONNECTIONS##;
 }
-
-rtmp_auto_push ##RTMP_AUTO_PUSH##;
 
 rtmp {
     access_log ##RTMP_ACCESS_LOG##;   
@@ -17,7 +18,6 @@ http {
     sendfile ##HTTP_SENDFILE##;
     tcp_nopush ##HTTP_TCP_NOPUSH##;
     tcp_nodelay ##HTTP_TCP_NODELAY##;
-    vhost_traffic_status_zone;
     include /usr/local/nginx/conf/vhost/www/*;
     access_log ##HTTP_ACCESS_LOG##; 
 }
