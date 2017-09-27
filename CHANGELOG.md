@@ -1,4 +1,14 @@
-Changes from v0.1.0-rc.3 to v0.1.0-rc.4
+### Changes from v0.1.0-rc.4 to v0.1.0
+
+* removed RC-Flag - PoC is never ending ;-)
+* simplified multiarch builds (example in footer of readme) and restored ARMHF and AARCH64 support
+* added Dockers multi-stage builds (requires Docker >= v17.05)
+* switched to Alpine-Linux 
+* updated FFmpeg to v3.3.4 (see [datarhei/ffmpeg:3](https://hub.docker.com/r/datarhei/ffmpeg/))
+* updated NGINX to v1.13.5 
+* reduced size of Docker images up to 83% (old 255MB, new 43MB)
+
+### Changes from v0.1.0-rc.3 to v0.1.0-rc.4
 
 * Updates and extentions:
   * NGINX 1.9.9 -> 1.10.2
@@ -26,7 +36,7 @@ Changes from v0.1.0-rc.3 to v0.1.0-rc.4
   * REMOVED:
     * RTMP_AUTO_PUSH (faulty)
 
-Changes from v0.1.0-rc.2 to v0.1.0-rc.3
+### Changes from v0.1.0-rc.2 to v0.1.0-rc.3
 
 * enabled rtmp-stats (html/xml/json)
   * nice work @ [espizo](https://github.com/espizo)/[simple-nginx-rtmp](https://github.com/espizo/simple-nginx-rtmp)
@@ -76,7 +86,7 @@ Changes from v0.1.0-rc.2 to v0.1.0-rc.3
   * REMOVED:
     * RTMP_SERVER_HLS_MAX_CONNECTIONS (without function)
 
-Changes from v0.1.0-rc.1 to v0.1.0-rc.2
+### Changes from v0.1.0-rc.1 to v0.1.0-rc.2
 
 * removed AIO (was problematic)
 * optimized snapshot creation

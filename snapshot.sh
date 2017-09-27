@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ./snapshot.sd {RTMP_PORT} {STREAM_NAME} {INTERVAL}
 
 while true

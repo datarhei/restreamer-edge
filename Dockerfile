@@ -1,146 +1,66 @@
-FROM debian:jessie
+ARG FFMPEG_IMAGE=datarhei/ffmpeg:3
+ARG ALPINE_IMAGE=alpine:latest
 
-MAINTAINER datarhei <info@datarhei.org>
-ENV RESTREAMER_EDGE_VERSION=0.1.0-rc.4 \
-    FFMPEG_VERSION=3.1.2 \
-    YASM_VERSION=1.3.0 \
-    LAME_VERSION=3_99_5 \
-    NGINX_VERSION=1.10.2 \
-    NGINX_RTMP_VERSION=master \
-    NGINX_NJS=master \
+FROM $FFMPEG_IMAGE as ffmpeg
+
+ENV NGINX_VERSION=1.13.5 \
+    NGINX_RTMP_VERSION=dev \
     NGINX_DEVEL_KIT_VERSION=0.3.0 \
     NGINX_STUB_STATUS_PROM=master \
-    LUA_NGINX_MODULE_VERSION=0.10.7 \
-    LUAJIT_VERSION=2.0.4 \
-    LUAJIT_MAJOR_VERSION=2.0 \
-    LUAJIT_LIB=/usr/local/lib \
-    LUAJIT_INC=/usr/local/include/luajit-2.0 \
+    NGINX_NJS=master \
+    LUA_NGINX_MODULE_VERSION=0.10.10 \
+    PKG_CONFIG_PATH=/usr/local/lib/pkgconfig \
+    SRC=/usr/local
 
-    SRC="/usr/local" \
-    LD_LIBRARY_PATH="${SRC}/lib" \
-    PKG_CONFIG_PATH="${SRC}/lib/pkgconfig" \
+RUN export buildDeps="autoconf \
+        automake \
+        bash \
+        binutils \
+        bzip2 \
+        cmake \
+        curl \
+        coreutils \
+        g++ \
+        gcc \
+        gnupg \
+        libtool \
+        make \
+        python \
+        openssl-dev \
+        tar \
+        xz \
+        git \
+        pcre-dev \
+        zlib-dev" && \
+    export MAKEFLAGS="-j$(($(grep -c ^processor /proc/cpuinfo) + 1))" && \
+    apk add --update ${buildDeps} libgcc libstdc++ ca-certificates libssl1.0 libxslt-dev libxml2-dev lua lua-dev luajit luajit-dev && \
 
-    BUILDDEPS="autoconf automake gcc g++ libtool make nasm unzip zlib1g-dev libssl-dev xz-utils cmake build-essential libpcre3-dev"
-
-RUN rm -rf /var/lib/apt/lists/* && \
-    apt-get update && \
-    apt-get install -y --force-yes --fix-missing apt-utils && \
-    apt-get upgrade -y && \
-    apt-get install -y --force-yes --fix-missing curl git libpcre3 tar perl ca-certificates apache2-utils libaio1 libxml2 libxslt-dev ${BUILDDEPS} && \
-
-    # yasm
-    DIR="$(mktemp -d)" && cd "${DIR}" && \
-    curl -LOks "https://www.tortall.net/projects/yasm/releases/yasm-${YASM_VERSION}.tar.gz" && \
-    tar xzvf "yasm-${YASM_VERSION}.tar.gz" && \
-    cd "yasm-${YASM_VERSION}" && \
-    ./configure \
-        --prefix="${SRC}" \
-        --bindir="${SRC}/bin" && \
-    make -j"$(nproc)" && \
-    make install && \
-    make distclean && \
-    rm -rf "${DIR}" && \
-
-    # x264
-    DIR="$(mktemp -d)" && cd "${DIR}" && \
-    git clone --depth 1 "git://git.videolan.org/x264" && \
-    cd x264 && \
-    ./configure \
-        --prefix="${SRC}" \
-        --bindir="${SRC}/bin" \
-        --enable-static \
-        --disable-cli && \
-    make -j"$(nproc)" && \
-    make install && \
-    make distclean && \
-    rm -rf "${DIR}" && \
-
-    # libmp3lame
-    DIR="$(mktemp -d)" && cd "${DIR}" && \
-    curl -LOks "https://github.com/rbrito/lame/archive/RELEASE__${LAME_VERSION}.tar.gz" && \
-    tar xzvf "RELEASE__${LAME_VERSION}.tar.gz" && \
-    cd "lame-RELEASE__${LAME_VERSION}" && \
-    ./configure \
-        --prefix="${SRC}" \
-        --bindir="${SRC}/bin" \
-        --enable-nasm \
-        --disable-shared && \
-    make -j"$(nproc)" && \
-    make install && \
-    make distclean && \
-    rm -rf "${DIR}" && \
-
-    # ffmpeg
-    DIR="$(mktemp -d)" && cd "${DIR}" && \
-    curl -LOks "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
-    tar xzvf "ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
-    cd "ffmpeg-${FFMPEG_VERSION}" && \
-    ./configure \
-        --prefix="${SRC}" \
-        --bindir="${SRC}/bin" \
-        --extra-cflags="-I${SRC}/include" \
-        --extra-ldflags="-L${SRC}/lib" \
-        --extra-libs=-ldl \
-        --enable-nonfree \
-        --enable-gpl \
-        --enable-version3 \
-        --enable-avresample \
-        --enable-libmp3lame \
-        --enable-libx264 \
-        --enable-openssl \
-        --enable-postproc \
-        --enable-small \
-        --disable-debug \
-        --disable-doc \
-        --disable-ffserver && \
-    make -j"$(nproc)" && \
-    make install && \
-    make distclean && \
-    hash -r && \
-    cd tools && \
-    make qt-faststart && \
-    cp qt-faststart "${SRC}/bin" && \
-    rm -rf "${DIR}" && \
-    echo "${SRC}/lib" > "/etc/ld.so.conf.d/libc.conf" && \
-    ffmpeg -buildconf && \
-
-    # LuaJIT
     DIR=$(mktemp -d) && cd ${DIR} && \
-    curl -LOks "http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.zip" && \
-    unzip LuaJIT-${LUAJIT_VERSION} && \
-    cd LuaJIT-${LUAJIT_VERSION} && \
-    make install && \
-    ln -sf luajit-${LUAJIT_VERSION} /usr/local/bin/luajit && \
-    rm -rf ${DIR}
-
-    # nginx-rtmp
-RUN DIR=$(mktemp -d) && cd ${DIR} && \
     curl -LOks "https://github.com/nginx/nginx/archive/release-${NGINX_VERSION}.tar.gz" && \
     tar xzvf "release-${NGINX_VERSION}.tar.gz" && \
     curl -LOks "https://github.com/sergey-dryabzhinsky/nginx-rtmp-module/archive/${NGINX_RTMP_VERSION}.tar.gz" && \
     tar xzvf "${NGINX_RTMP_VERSION}.tar.gz" && \
-    curl -LOks https://github.com/nginx/njs/archive/${NGINX_NJS}.zip && \
-    unzip ${NGINX_NJS}.zip && \
     curl -LOks "https://github.com/simpl/ngx_devel_kit/archive/v${NGINX_DEVEL_KIT_VERSION}.zip" -O && \
     unzip v${NGINX_DEVEL_KIT_VERSION}.zip && \
     curl -LOks "https://github.com/openresty/lua-nginx-module/archive/v${LUA_NGINX_MODULE_VERSION}.zip" && \
     unzip v${LUA_NGINX_MODULE_VERSION}.zip && \
     curl -LOks "https://github.com/mhowlett/ngx_stub_status_prometheus/archive/${NGINX_STUB_STATUS_PROM}.zip" && \
     unzip ${NGINX_STUB_STATUS_PROM}.zip && \
+    curl -LOks https://github.com/nginx/njs/archive/${NGINX_NJS}.zip && \
+    unzip ${NGINX_NJS}.zip && \
     cd nginx-release-${NGINX_VERSION} && \
     auto/configure \
         --with-http_ssl_module \
         --with-http_xslt_module \
         --with-ld-opt="-Wl,-rpath,/usr/local/lib/lua" \
-        --with-http_ssl_module \
         --with-http_realip_module \
         --with-http_stub_status_module \
-        --add-dynamic-module="../njs-${NGINX_NJS}/nginx" \
-        --add-dynamic-module="../nginx-rtmp-module-${NGINX_RTMP_VERSION}" \
+        --add-module="../nginx-rtmp-module-${NGINX_RTMP_VERSION}" \
         --add-module="../ngx_devel_kit-${NGINX_DEVEL_KIT_VERSION}" \
-        --add-module="../lua-nginx-module-${LUA_NGINX_MODULE_VERSION}" \
+        --add-dynamic-module="../njs-${NGINX_NJS}/nginx" \
+        --add-dynamic-module="../lua-nginx-module-${LUA_NGINX_MODULE_VERSION}" \
         --add-dynamic-module="../ngx_stub_status_prometheus-${NGINX_STUB_STATUS_PROM}" && \
-    make -j"$(nproc)" && \
+    make && \
     make install && \
     cp ../nginx-rtmp-module-${NGINX_RTMP_VERSION}/stat.xsl /usr/local/nginx/html/info.xsl && \
     curl -LOks "https://raw.githubusercontent.com/espizo/simple-nginx-rtmp/master/www/entities.dtd" && \
@@ -148,14 +68,9 @@ RUN DIR=$(mktemp -d) && cd ${DIR} && \
     curl -LOks "https://raw.githubusercontent.com/espizo/simple-nginx-rtmp/master/www/xml2json.xsl" && \
     mv xml2json.xsl /usr/local/nginx/conf/ && \
     rm -rf ${DIR} && \
-        
-    # letsencrypt
-    cd /opt && \
-    curl -LOks https://dl.eff.org/certbot-auto && \
-    chmod a+x ./certbot-auto && \
-    ./certbot-auto --os-packages-only --noninteractive && \
+    cd /usr/local/nginx/ && \
+    curl -LOks "https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/master/prometheus.lua" && \
     
-    # clappr-player
     DIR=$(mktemp -d) && cd ${DIR} && \
     curl -LOks "https://github.com/clappr/clappr/archive/master.tar.gz" && \
     tar xzvf "master.tar.gz" && \
@@ -164,18 +79,25 @@ RUN DIR=$(mktemp -d) && cd ${DIR} && \
     tar xzvf "master.tar.gz" && \
     rm master.tar.gz && \
     mv * /usr/local/nginx/html && \
-    rm -rf ${DIR} && \
+    rm -rf ${DIR}
 
-    # prometheus exporter
-    cd /usr/local/nginx/ && \
-    curl -LOks "https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/master/prometheus.lua" && \
+FROM $ALPINE_IMAGE
 
-    apt-get purge -y --auto-remove ${BUILDDEPS} && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/* \
-        /tmp/* \
-        /var/tmp/*
+MAINTAINER datarhei <info@datarhei.org>
 
+ENV RESTREAMER_EDGE_VERSION=0.1.0 \
+    SRC=/usr/local \
+    LD_LIBRARY_PATH=/usr/local/lib \
+    PKG_CONFIG_PATH=/usr/local/lib/pkgconfig 
+
+COPY --from=ffmpeg /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg /usr/local/bin/ffprobe /usr/local/bin/ffprobe
+COPY --from=ffmpeg /usr/local/nginx /usr/local/nginx
+COPY --from=ffmpeg /usr/local/lib /usr/local/lib
+
+RUN apk add --no-cache --update libssl1.0 libxml2 libxslt pcre apache2-utils lua luajit certbot && \
+    ffmpeg -buildconf
+    
 ADD templates /templates
 ADD favicon.ico /usr/local/nginx/html/favicon.ico
 ADD run.sh /run.sh
@@ -188,7 +110,7 @@ RUN mkdir /usr/local/nginx/conf/vhost && \
     chmod +x /run.sh && \
     chmod +x /snapshot.sh && \
     chmod 777 /snapshot.sh
-    
+
 ENV WORKER_PROCESSES=1 \
     WORKER_CONNECTIONS=1024 \
     

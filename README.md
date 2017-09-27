@@ -353,6 +353,22 @@ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" m
    $ docker run .... -v /mnt/restreamer-edge/hls:/tmp/hls ....
    ```
 
+## Build your own Image
+
+```sh
+docker build -t restreamer-edge:amd64 \
+              --build-arg FFMPEG_IMAGE=datarhei/ffmpeg:3 \
+              --build-arg ALPINE_IMAGE=alpine:latest . 
+             
+docker build -t restreamer-edge:armhf \
+              --build-arg FFMPEG_IMAGE=datarhei/ffmpeg:3-armhf \
+              --build-arg ALPINE_IMAGE=resin/armhf-alpine:latest . 
+             
+docker build -t restreamer-edge:aarch64 \
+              --build-arg FFMPEG_IMAGE=datarhei/ffmpeg:3-aarch64 \
+              --build-arg ALPINE_IMAGE=resin/aarch64-alpine:latest .
+```
+
 ## Help, bugs and future requests
 
 If you have problems or found a bug feel free to create a new issue on the Github issue management.

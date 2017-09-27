@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # SET IMAGE FOLDER PERM
 chmod 777 /usr/local/nginx/html/images -R
@@ -86,10 +86,10 @@ then
     if [ -f "/etc/letsencrypt/live/${CERT_NAME}/cert.pem" ]
     then
         printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Try to renew the existing certificate\n"
-        /opt/certbot-auto renew --quiet --noninteractive --no-self-upgrade
+        certbot renew --quiet --noninteractive --no-self-upgrade
     else
         printf "$(date '+%Y/%m/%d %H:%M:%S') [info] Creating the certificate\n"
-        /opt/certbot-auto certonly --standalone --noninteractive --no-self-upgrade --agree-tos --email ${HTTPS_LETSENCRYPT_MAIL} -d ${HTTPS_SRV_CERT_DOMAIN}
+        certbot certonly --standalone --quiet --noninteractive --agree-tos -m ${HTTPS_LETSENCRYPT_MAIL} -d ${HTTPS_SRV_CERT_DOMAIN}
     fi
 fi
 
