@@ -233,7 +233,7 @@ PLAYER_GA_TRACKERNAME "datarheiEdge"
 #### [DigitalOcean](https://www.digitalocean.com/)
 
 1. Create a Droplet based on CoreOS and insert the following content into the "User Data" field:
-   ```sh
+```sh
 #cloud-config
 write_files:
   - path: /etc/restreamer-edge.env
@@ -258,7 +258,7 @@ coreos:
         ExecStart=/usr/bin/docker run --name restreamer-edge -p 80:80 -p 1935:1935 --env-file /etc/restreamer-edge.env datarhei/restreamer-edge:latest
         ExecStop=/usr/bin/docker stop restreamer-edge
         ExecReload=/usr/bin/docker restart restreamer-edge
-   ```
+```
 
 2. wait few minutes, then you can push a stream to "rtmp://[your-droplet-ip]:1935/hls/mystream?token=datarhei" and can open the Player/Stream "http://[your-droplet-ip]:80/?stream=mystream"
 
@@ -271,21 +271,21 @@ coreos:
 3. Launch your new server
 4. Login and start the edge:   
    * for an ARM instance:   
-   ```sh 
+```sh 
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
   -e "HTTP_AUTH_USERNAME=admin" \
   -e "HTTP_AUTH_PASSWORD=datarhei" \
   -e "RTMP_PUBLISH_TOKEN=datarhei" \
       datarhei/restreamer-edge-armhf:latest
-   ```
+```
    * For an x86 instance:   
-   ```sh
+```sh
 docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
   -e "HTTP_AUTH_USERNAME=admin" \
   -e "HTTP_AUTH_PASSWORD=datarhei" \
   -e "RTMP_PUBLISH_TOKEN=datarhei" \
       datarhei/restreamer-edge:latest
-   ```
+```
 5. Wait few minutes, then you can push the stream to "rtmp://[your-server-ip]:1935/hls/mystream?token=datarhei". Open the Player/Stream "http://[your-server-ip]:80/?stream=mystream"
 
 
@@ -295,7 +295,7 @@ docker run -d --name restreamer-edge --restart always -p 80:80 -p 1935:1935 \
 
 1. Startup your DCOS cloud or Marathon instance
 2. Post the following config to Marathon (replace "marathon-ip")
-   ```sh
+```sh
 curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" marathon-ip:8080/v2/apps -d '{
 	"id": "/datarhei/restreamer-edge",
 	"container": {
@@ -333,7 +333,7 @@ curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" m
 		"maxConsecutiveFailures": 3
 	}]
 }'
-   ```
+```
 
 3. Wait few minutes, then you are able to push a stream to "rtmp://[mesos-agent-ip]:[port1]/hls/mystream?token=datarhei". Open the Player/Stream "http://[mesos-agent-ip]:[port0]/?stream=mystream"
 
