@@ -144,7 +144,7 @@ then
     # ADD FFMPEG COMMAND
     FFMPEG_COMMAND=$(cd /templates/ffmpeg_profiles && cat $PROFILES)
     echo $FFMPEG_COMMAND > /tmp/ffmpeg_command.tmp
-    sed -i -e "/##FFMPEG_COMMAND##/r /tmp/ffmpeg_command.tmp" -e "//d" /templates/$RTMPSRV.tmpl
+    sed -i -e "/##FFMPEG_COMMAND##/r /tmp/ffmpeg_command.tmp" -e "/##FFMPEG_COMMAND##/d" /templates/$RTMPSRV.tmpl
     sed -i "s/##RTMP_SRV_PORT##/${RTMP_SRV_PORT}/g" /templates/$RTMPSRV.tmpl
     
     # ADD HLS VARIANT
@@ -155,7 +155,7 @@ then
        printf "$PROFILE_CONTENT\n" >> /tmp/hls_variant.tmp
     done
     sed -i '1!G;h;$!d' /tmp/hls_variant.tmp
-    sed -i -e "/##HLS_VARIANT##/r /tmp/hls_variant.tmp" -e "//d" /templates/$RTMPSRV.tmpl
+    sed -i -e "/##HLS_VARIANT##/r /tmp/hls_variant.tmp" -e "/##HLS_VARIANT##/d" /templates/$RTMPSRV.tmpl
     
     if [ "${PLAYER_CREATE}" = "true" ]
     then
@@ -166,7 +166,7 @@ then
             echo "$((i++)): '$profile'," >> /tmp/player_transcoding_profile.tmp
         done
         sed -i '1!G;h;$!d' /tmp/player_transcoding_profile.tmp 
-        sed -i -e "/##FFMPEG_PROFILE##/r /tmp/player_transcoding_profile.tmp" -e "//d" /templates/player_transcoding.tmpl
+        sed -i -e "/##FFMPEG_PROFILE##/r /tmp/player_transcoding_profile.tmp" -e "/##FFMPEG_PROFILE##/d" /templates/player_transcoding.tmpl
         sed "s|##PLAYER_COLOR_BUTTONS##|${PLAYER_COLOR_BUTTONS}|;s|##PLAYER_COLOR_SEEKBAR##|${PLAYER_COLOR_SEEKBAR}|;s|##GACCOUNT##|$GACCOUNT|;s|##GATRACKERNAME##|$GATRACKERNAME|;s|##WATERMARK##|$WATERMARK|;s|##WATERMARKLINK##|$WATERMARKLINK|" /templates/player_transcoding.tmpl > /usr/local/nginx/html/index.html
     fi
 else
