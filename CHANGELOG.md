@@ -1,3 +1,7 @@
+### Changes from v0.1.0 to 0.1.1
+
+* fixed transcoding, issue [#4](https://github.com/datarhei/restreamer-edge/issues/4)
+
 ### Changes from v0.1.0-rc.4 to v0.1.0
 
 * removed RC-Flag - PoC is never ending ;-)
